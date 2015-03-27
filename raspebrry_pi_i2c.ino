@@ -6,7 +6,7 @@
 
 #define  REG_MAP_SIZE             14
 
-#define  MAX_SENT_BYTES       3
+#define  MAX_SENT_BYTES       10
 
 #define I2C_ADDR                 0x29             
 #define TWI_FREQ_SETTING         400000L       // 400KHz for I2C
@@ -17,7 +17,7 @@
 volatile unsigned long startPeriod; // set in the interrupt
 volatile int16_t rc[7]; //nb of RC channels
 volatile bool dataReady;
- 
+bool dataReceive;
 
 /********* Global  Variables  ***********/
 
@@ -27,7 +27,9 @@ byte registerMapTemp[REG_MAP_SIZE - 1];
 
 byte receivedCommands[MAX_SENT_BYTES];
 
-byte  zeroBData, zeroCData;
+byte  mot0_0,mot0_1,mot1_0,mot1_1,mot2_0,mot2_1,mot3_0,mot3_1;
+
+int mot0, mot1, mot2, mot3;
 
 void setup()
 
@@ -94,6 +96,44 @@ void loop()
   Serial.println(" ");
   //Serial.println(registerMapTemp[7]);
   */
+  
+  /*
+  Serial.print(mot0_0);
+  Serial.print(" ");
+  Serial.print(mot0_1);
+  Serial.print(" ");
+  Serial.print(mot1_0);
+  Serial.print(" ");
+  Serial.print(mot1_1);
+  Serial.print(" ");
+  Serial.print(mot2_0);
+  Serial.print(" ");
+  Serial.print(mot2_1);
+  Serial.print(" ");
+  Serial.print(mot3_0);
+  Serial.print(" ");
+  Serial.println(mot3_1);
+  */
+  
+  if(dataReceive == true)
+  {
+    dataReceive =false;
+    mot0 = mot0_0<<8 | mot0_1;
+    mot1 = mot1_0<<8 | mot1_1;
+    mot2 = mot2_0<<8 | mot2_1;
+    mot3 = mot3_0<<8 | mot3_1;
+    /*
+    Serial.print(mot0);
+    Serial.print(" ");
+    Serial.print(mot1);
+    Serial.print(" ");
+    Serial.print(mot2);
+    Serial.print(" ");
+    Serial.print(mot3);
+    Serial.println(" ");
+    */
+  }
+  
   if(dataReady==true)
   {
     dataReady=false;
@@ -165,33 +205,20 @@ void receiveEvent(int bytesReceived)
 
           case 0x0B:
 
-               zeroBData = receivedCommands[1]; //save the data to a separate variable
-
-               bytesReceived--;
-
-               if(bytesReceived == 1)  //only two bytes total were sent so we’re done
-
-               {
-
-                    return;
-
-               }
-
-               zeroCData = receivedCommands[2];
+                mot0_0 = receivedCommands[1]; //save the data to a separate variable
+                mot0_1 = receivedCommands[2];
+                mot1_0=receivedCommands[3];
+                mot1_1=receivedCommands[4];
+                mot2_0=receivedCommands[5];
+                mot2_1=receivedCommands[6];
+                mot3_0=receivedCommands[7];
+                mot3_1=receivedCommands[8];
+                dataReceive = true;
 
                return; //we simply return here because the most bytes we can receive is three anyway
 
                break;
 
-          case 0x0C:
-
-               
-
-               zeroCData = receivedCommands[1];
-
-               return; //we simply return here because 0x0C is the last writable register
-
-               break;
 
           default:
 
